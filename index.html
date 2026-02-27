@@ -1,0 +1,1074 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Warm Cache — Sitemap Crawler</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --bg: #0a0e17;
+            --bg-card: rgba(255, 255, 255, 0.04);
+            --bg-card-hover: rgba(255, 255, 255, 0.07);
+            --border: rgba(255, 255, 255, 0.08);
+            --text: #e2e8f0;
+            --text-muted: #94a3b8;
+            --accent: #6366f1;
+            --accent-glow: rgba(99, 102, 241, 0.35);
+            --success: #22c55e;
+            --success-bg: rgba(34, 197, 94, 0.1);
+            --error: #ef4444;
+            --error-bg: rgba(239, 68, 68, 0.1);
+            --warning: #f59e0b;
+            --radius: 14px;
+            --radius-sm: 10px;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 32px 20px;
+            background-image:
+                radial-gradient(ellipse 80% 60% at 50% -20%, rgba(99, 102, 241, 0.12), transparent),
+                radial-gradient(ellipse 60% 40% at 80% 100%, rgba(139, 92, 246, 0.08), transparent);
+        }
+
+        .container {
+            max-width: 880px;
+            margin: 0 auto;
+        }
+
+        /* ── Header ── */
+        .header {
+            text-align: center;
+            margin-bottom: 36px;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, #c7d2fe, #6366f1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p {
+            color: var(--text-muted);
+            font-size: 14px;
+            margin-top: 6px;
+        }
+
+        /* ── Card ── */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            transition: background 0.2s;
+        }
+
+        .card:hover {
+            background: var(--bg-card-hover);
+        }
+
+        .card-title {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            margin-bottom: 16px;
+        }
+
+        /* ── Form Controls ── */
+        .form-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: stretch;
+        }
+
+        .input-group {
+            flex: 1;
+            min-width: 0;
+            position: relative;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        input[type="text"],
+        input[type="number"] {
+            width: 100%;
+            padding: 12px 14px;
+            font-size: 14px;
+            font-family: inherit;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text);
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+
+        .concurrency-group {
+            flex: 0 0 100px;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 8px;
+            align-items: flex-end;
+        }
+
+        button {
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: 600;
+            border: none;
+            border-radius: var(--radius-sm);
+            padding: 12px 22px;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            white-space: nowrap;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: #fff;
+            box-shadow: 0 2px 12px var(--accent-glow);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: #818cf8;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 20px var(--accent-glow);
+        }
+
+        .btn-primary:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-danger {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--error);
+            border: 1px solid rgba(239, 68, 68, 0.25);
+        }
+
+        .btn-danger:hover:not(:disabled) {
+            background: rgba(239, 68, 68, 0.25);
+        }
+
+        .btn-danger:disabled {
+            opacity: 0.35;
+            cursor: not-allowed;
+        }
+
+        /* ── Progress Section ── */
+        .progress-section {
+            display: none;
+        }
+
+        .progress-section.visible {
+            display: block;
+        }
+
+        .progress-bar-track {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.06);
+            border-radius: 99px;
+            overflow: hidden;
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            width: 0%;
+            border-radius: 99px;
+            background: linear-gradient(90deg, var(--accent), #a78bfa);
+            transition: width 0.3s ease;
+            position: relative;
+        }
+
+        .progress-bar-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg,
+                    transparent,
+                    rgba(255, 255, 255, 0.25),
+                    transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% {
+                transform: translateX(-100%);
+            }
+
+            100% {
+                transform: translateX(100%);
+            }
+        }
+
+        .progress-bar-fill.done::after {
+            animation: none;
+        }
+
+        .progress-bar-fill.success {
+            background: linear-gradient(90deg, #22c55e, #4ade80);
+        }
+
+        .progress-bar-fill.has-errors {
+            background: linear-gradient(90deg, var(--warning), #fbbf24);
+        }
+
+        .progress-bar-fill.all-errors {
+            background: linear-gradient(90deg, var(--error), #f87171);
+        }
+
+        /* ── Stats Grid ── */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 600px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 16px;
+            text-align: center;
+            transition: transform 0.15s, background 0.2s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .stat-card .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            line-height: 1;
+            margin-bottom: 4px;
+        }
+
+        .stat-card .stat-label {
+            font-size: 11px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+        }
+
+        .stat-card.stat-total .stat-value {
+            color: var(--text);
+        }
+
+        .stat-card.stat-done .stat-value {
+            color: #818cf8;
+        }
+
+        .stat-card.stat-ok .stat-value {
+            color: var(--success);
+        }
+
+        .stat-card.stat-err .stat-value {
+            color: var(--error);
+        }
+
+        .stat-card .stat-icon {
+            font-size: 18px;
+            margin-bottom: 8px;
+        }
+
+        .progress-percent {
+            font-size: 13px;
+            color: var(--text-muted);
+            text-align: right;
+            margin-bottom: 8px;
+            font-weight: 500;
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* ── Status Banner ── */
+        .status-banner {
+            display: none;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 18px;
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 16px;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-8px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .status-banner.running {
+            display: flex;
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            color: #a5b4fc;
+        }
+
+        .status-banner.success {
+            display: flex;
+            background: var(--success-bg);
+            border: 1px solid rgba(34, 197, 94, 0.2);
+            color: var(--success);
+        }
+
+        .status-banner.error {
+            display: flex;
+            background: var(--error-bg);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            color: var(--error);
+        }
+
+        .status-banner.stopped {
+            display: flex;
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+            color: var(--warning);
+        }
+
+        .spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(99, 102, 241, 0.3);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            flex-shrink: 0;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .status-icon {
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+
+        /* ── Log ── */
+        .log-card .card-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .log-counter {
+            font-size: 11px;
+            background: rgba(255, 255, 255, 0.08);
+            padding: 2px 8px;
+            border-radius: 99px;
+            font-variant-numeric: tabular-nums;
+        }
+
+        #log {
+            font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+            font-size: 12.5px;
+            line-height: 1.7;
+            white-space: pre-wrap;
+            word-break: break-all;
+            background: rgba(0, 0, 0, 0.35);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 14px 16px;
+            min-height: 260px;
+            max-height: 480px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+        }
+
+        #log::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        #log::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        #log::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+        }
+
+        .log-line {
+            padding: 2px 0;
+            display: flex;
+            gap: 8px;
+            animation: fadeIn 0.15s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        .log-line .tag {
+            flex-shrink: 0;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 1px 6px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .log-line.ok .tag {
+            background: var(--success-bg);
+            color: var(--success);
+        }
+
+        .log-line.err .tag {
+            background: var(--error-bg);
+            color: var(--error);
+        }
+
+        .log-line.info {
+            color: var(--text-muted);
+        }
+
+        .log-line.info .tag {
+            background: rgba(99, 102, 241, 0.1);
+            color: #a5b4fc;
+        }
+
+        .log-line .url-text {
+            color: var(--text-muted);
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .log-line.ok .url-text {
+            color: rgba(34, 197, 94, 0.7);
+        }
+
+        .log-line.err .url-text {
+            color: rgba(239, 68, 68, 0.7);
+        }
+
+        /* ── Elapsed time ── */
+        .elapsed {
+            text-align: center;
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 12px;
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* ── Filter Buttons ── */
+        .log-filters {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 10px;
+        }
+
+        .filter-btn {
+            padding: 5px 12px;
+            font-size: 11px;
+            font-weight: 600;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-muted);
+            border: 1px solid transparent;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .filter-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .filter-btn.active {
+            background: rgba(99, 102, 241, 0.15);
+            color: #a5b4fc;
+            border-color: rgba(99, 102, 241, 0.3);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🔥 Warm Cache</h1>
+            <p>Crawl sitemap và làm ấm cache cho tất cả URL</p>
+        </div>
+
+        <!-- Config Card -->
+        <div class="card">
+            <div class="card-title">Cấu hình</div>
+            <div class="form-row">
+                <div class="input-group">
+                    <label for="sitemapUrl">Sitemap URL</label>
+                    <input id="sitemapUrl" type="text" value="https://longvan.net/sitemap.xml"
+                        placeholder="https://example.com/sitemap.xml" />
+                </div>
+                <div class="input-group concurrency-group">
+                    <label for="concurrency">Song song</label>
+                    <input id="concurrency" type="number" min="1" max="20" value="6" />
+                </div>
+                <div class="btn-group">
+                    <button id="startBtn" class="btn-primary">
+                        <span>▶</span> Bắt đầu
+                    </button>
+                    <button id="stopBtn" class="btn-danger" disabled>
+                        <span>■</span> Dừng
+                    </button>
+                </div>
+            </div>
+            <div class="form-row" style="margin-top: 12px;">
+                <div class="input-group">
+                    <label for="corsProxy">CORS Proxy (dùng để đọc sitemap)</label>
+                    <input id="corsProxy" type="text" value="https://corsproxy.io/?"
+                        placeholder="https://corsproxy.io/?" />
+                </div>
+            </div>
+            <div style="margin-top: 10px; display: flex; align-items: center; gap: 8px;">
+                <label
+                    style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:var(--text-muted);text-transform:none;letter-spacing:0">
+                    <input type="checkbox" id="useProxy" checked
+                        style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer" />
+                    Sử dụng CORS Proxy (bắt buộc khi mở từ file://)
+                </label>
+            </div>
+        </div>
+
+        <!-- Progress Section -->
+        <div id="progressSection" class="progress-section">
+            <!-- Status Banner -->
+            <div id="statusBanner" class="status-banner"></div>
+
+            <!-- Progress Card -->
+            <div class="card">
+                <div class="card-title">Tiến trình</div>
+                <div class="progress-percent" id="progressPercent">0%</div>
+                <div class="progress-bar-track">
+                    <div class="progress-bar-fill" id="progressBar"></div>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card stat-total">
+                        <div class="stat-icon">📋</div>
+                        <div class="stat-value" id="totalCount">0</div>
+                        <div class="stat-label">Tổng URL</div>
+                    </div>
+                    <div class="stat-card stat-done">
+                        <div class="stat-icon">⚡</div>
+                        <div class="stat-value" id="doneCount">0</div>
+                        <div class="stat-label">Đã xử lý</div>
+                    </div>
+                    <div class="stat-card stat-ok">
+                        <div class="stat-icon">✅</div>
+                        <div class="stat-value" id="okCount">0</div>
+                        <div class="stat-label">Thành công</div>
+                    </div>
+                    <div class="stat-card stat-err">
+                        <div class="stat-icon">❌</div>
+                        <div class="stat-value" id="errCount">0</div>
+                        <div class="stat-label">Thất bại</div>
+                    </div>
+                </div>
+
+                <div class="elapsed" id="elapsedTime"></div>
+            </div>
+
+            <!-- Log Card -->
+            <div class="card log-card">
+                <div class="card-title">
+                    <span>Nhật ký</span>
+                    <span class="log-counter" id="logCounter">0 dòng</span>
+                </div>
+                <div class="log-filters">
+                    <button class="filter-btn active" data-filter="all">Tất cả</button>
+                    <button class="filter-btn" data-filter="ok">Thành công</button>
+                    <button class="filter-btn" data-filter="err">Lỗi</button>
+                    <button class="filter-btn" data-filter="info">Thông tin</button>
+                </div>
+                <div id="log"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const $ = (id) => document.getElementById(id);
+
+        /* ── DOM refs ── */
+        const logEl = $("log");
+        const totalCountEl = $("totalCount");
+        const doneCountEl = $("doneCount");
+        const okCountEl = $("okCount");
+        const errCountEl = $("errCount");
+        const progressBar = $("progressBar");
+        const progressPercent = $("progressPercent");
+        const progressSection = $("progressSection");
+        const statusBanner = $("statusBanner");
+        const startBtn = $("startBtn");
+        const stopBtn = $("stopBtn");
+        const elapsedTimeEl = $("elapsedTime");
+        const logCounterEl = $("logCounter");
+
+        let stopped = false;
+        let startTime = null;
+        let timerInterval = null;
+        let logLineCount = 0;
+        let currentFilter = "all";
+
+        /* ── Filter buttons ── */
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentFilter = btn.dataset.filter;
+                applyFilter();
+            });
+        });
+
+        function applyFilter() {
+            logEl.querySelectorAll('.log-line').forEach(line => {
+                if (currentFilter === 'all') {
+                    line.style.display = '';
+                } else {
+                    line.style.display = line.classList.contains(currentFilter) ? '' : 'none';
+                }
+            });
+        }
+
+        /* ── Logging ── */
+        function log(message, type = "info") {
+            logLineCount++;
+            const line = document.createElement("div");
+            line.className = `log-line ${type}`;
+
+            const tag = document.createElement("span");
+            tag.className = "tag";
+
+            const text = document.createElement("span");
+            text.className = "url-text";
+            text.textContent = message;
+
+            if (type === "ok") {
+                tag.textContent = "OK";
+            } else if (type === "err") {
+                tag.textContent = "ERR";
+            } else {
+                tag.textContent = "INFO";
+            }
+
+            line.appendChild(tag);
+            line.appendChild(text);
+            logEl.appendChild(line);
+            logEl.scrollTop = logEl.scrollHeight;
+
+            logCounterEl.textContent = `${logLineCount} dòng`;
+
+            // Apply current filter to new line
+            if (currentFilter !== 'all' && !line.classList.contains(currentFilter)) {
+                line.style.display = 'none';
+            }
+        }
+
+        /* ── Status banner ── */
+        function setStatus(type, message) {
+            statusBanner.className = `status-banner ${type}`;
+            let icon = '';
+            if (type === 'running') {
+                icon = '<div class="spinner"></div>';
+            } else if (type === 'success') {
+                icon = '<span class="status-icon">✅</span>';
+            } else if (type === 'error') {
+                icon = '<span class="status-icon">❌</span>';
+            } else if (type === 'stopped') {
+                icon = '<span class="status-icon">⏸</span>';
+            }
+            statusBanner.innerHTML = `${icon}<span>${message}</span>`;
+        }
+
+        /* ── Timer ── */
+        function startTimer() {
+            startTime = Date.now();
+            timerInterval = setInterval(updateTimer, 1000);
+        }
+
+        function stopTimer() {
+            clearInterval(timerInterval);
+            updateTimer();
+        }
+
+        function updateTimer() {
+            if (!startTime) return;
+            const elapsed = Math.floor((Date.now() - startTime) / 1000);
+            const mins = Math.floor(elapsed / 60);
+            const secs = elapsed % 60;
+            elapsedTimeEl.textContent = `⏱ Thời gian: ${mins}m ${String(secs).padStart(2, '0')}s`;
+        }
+
+        /* ── Reset ── */
+        function resetStats() {
+            totalCountEl.textContent = "0";
+            doneCountEl.textContent = "0";
+            okCountEl.textContent = "0";
+            errCountEl.textContent = "0";
+            progressBar.style.width = "0%";
+            progressBar.className = "progress-bar-fill";
+            progressPercent.textContent = "0%";
+            logEl.innerHTML = "";
+            stopped = false;
+            logLineCount = 0;
+            logCounterEl.textContent = "0 dòng";
+            elapsedTimeEl.textContent = "";
+            statusBanner.className = "status-banner";
+            progressSection.classList.add("visible");
+
+            // Reset filter
+            currentFilter = "all";
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            document.querySelector('.filter-btn[data-filter="all"]').classList.add('active');
+        }
+
+        /* ── Button states ── */
+        function setRunning(running) {
+            startBtn.disabled = running;
+            stopBtn.disabled = !running;
+            if (running) {
+                startBtn.innerHTML = '<div class="spinner" style="width:14px;height:14px;border-width:2px"></div> Đang chạy…';
+            } else {
+                startBtn.innerHTML = '<span>▶</span> Bắt đầu';
+            }
+        }
+
+        /* ── CORS proxy helpers ── */
+        const FALLBACK_PROXIES = [
+            (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+            (url) => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+            (url) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
+        ];
+
+        function getProxiedUrl(url) {
+            const useProxy = $("useProxy").checked;
+            if (!useProxy) return url;
+            const proxy = $("corsProxy").value.trim();
+            if (!proxy) return url;
+            return proxy + encodeURIComponent(url);
+        }
+
+        function getProxyList(url) {
+            const useProxy = $("useProxy").checked;
+            if (!useProxy) return [url];
+
+            const userProxy = $("corsProxy").value.trim();
+            const list = [];
+
+            // User-configured proxy first
+            if (userProxy) {
+                list.push(userProxy + encodeURIComponent(url));
+            }
+
+            // Then fallback proxies (skip duplicates)
+            for (const fn of FALLBACK_PROXIES) {
+                const proxyUrl = fn(url);
+                if (!list.includes(proxyUrl)) {
+                    list.push(proxyUrl);
+                }
+            }
+
+            return list;
+        }
+
+        /* ── Fetch text with proxy fallback (supports .gz) ── */
+        async function fetchText(url) {
+            const proxyUrls = getProxyList(url);
+            let lastError = null;
+
+            for (let i = 0; i < proxyUrls.length; i++) {
+                try {
+                    const res = await fetch(proxyUrls[i], {
+                        method: "GET",
+                        cache: "reload"
+                    });
+
+                    if (!res.ok) {
+                        lastError = new Error(`HTTP ${res.status}`);
+                        if (i < proxyUrls.length - 1) {
+                            log(`Proxy #${i + 1} thất bại (${res.status}), thử proxy tiếp…`, "info");
+                        }
+                        continue;
+                    }
+
+                    if (i > 0) {
+                        log(`✓ Dùng proxy #${i + 1} thành công`, "info");
+                    }
+
+                    if (url.endsWith(".gz")) {
+                        if (!("DecompressionStream" in window)) {
+                            throw new Error("Browser này không hỗ trợ đọc .gz bằng JS");
+                        }
+                        const ds = new DecompressionStream("gzip");
+                        const decompressedStream = res.body.pipeThrough(ds);
+                        return await new Response(decompressedStream).text();
+                    }
+
+                    return await res.text();
+                } catch (err) {
+                    lastError = err;
+                    if (i < proxyUrls.length - 1) {
+                        log(`Proxy #${i + 1} lỗi, thử proxy tiếp…`, "info");
+                    }
+                }
+            }
+
+            throw new Error(`Không tải được sitemap sau ${proxyUrls.length} proxy: ${lastError?.message || 'unknown'} — ${url}`);
+        }
+
+        /* ── Collect URLs from sitemap (recursive) ── */
+        async function collectUrlsFromSitemap(sitemapUrl, seen = new Set()) {
+            if (seen.has(sitemapUrl)) return [];
+            seen.add(sitemapUrl);
+
+            log(`Đọc sitemap: ${sitemapUrl}`, "info");
+
+            const xmlText = await fetchText(sitemapUrl);
+            const doc = new DOMParser().parseFromString(xmlText, "application/xml");
+
+            const parserError = doc.querySelector("parsererror");
+            if (parserError) {
+                throw new Error(`XML lỗi: ${sitemapUrl}`);
+            }
+
+            const sitemapNodes = Array.from(doc.getElementsByTagName("sitemap"));
+            if (sitemapNodes.length > 0) {
+                let all = [];
+                for (const node of sitemapNodes) {
+                    const loc = node.getElementsByTagName("loc")[0]?.textContent?.trim();
+                    if (!loc) continue;
+                    const childUrls = await collectUrlsFromSitemap(loc, seen);
+                    all = all.concat(childUrls);
+                }
+                return all;
+            }
+
+            const urlNodes = Array.from(doc.getElementsByTagName("url"));
+            return urlNodes
+                .map((node) => node.getElementsByTagName("loc")[0]?.textContent?.trim())
+                .filter(Boolean);
+        }
+
+        /* ── Warm one URL ── */
+        async function warmOneUrl(url) {
+            try {
+                // no-cors: request vẫn đến server gốc để warm cache
+                // nhưng response bị opaque (không đọc được status)
+                const res = await fetch(url, {
+                    method: "GET",
+                    mode: "no-cors",
+                    cache: "reload",
+                    redirect: "follow"
+                });
+
+                // Với no-cors, response.type === 'opaque' và status === 0
+                // Nhưng request ĐÃ được gửi đến server → cache đã warm
+                if (res.type === 'opaque' || res.ok) {
+                    return { ok: true, status: res.type === 'opaque' ? 'warm' : res.status, url };
+                }
+
+                throw new Error(`HTTP ${res.status}`);
+            } catch (error) {
+                // Nếu có network error thực sự
+                if (error.message === 'Failed to fetch') {
+                    // Với no-cors, một số redirect cũng có thể gây lỗi
+                    // Thử lại với proxy nếu có
+                    try {
+                        const proxyUrl = getProxiedUrl(url);
+                        if (proxyUrl !== url) {
+                            const res2 = await fetch(proxyUrl, { method: "GET", cache: "reload" });
+                            return { ok: res2.ok, status: res2.ok ? res2.status : `HTTP ${res2.status}`, url };
+                        }
+                    } catch (e2) {
+                        // ignore, fall through
+                    }
+                }
+                return { ok: false, error: error.message, url };
+            }
+        }
+
+        /* ── Pool runner with progress ── */
+        async function runPool(items, limit, worker) {
+            let index = 0;
+            let done = 0;
+            let ok = 0;
+            let err = 0;
+            const total = items.length;
+
+            totalCountEl.textContent = String(total);
+
+            function updateProgress() {
+                const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+                progressBar.style.width = `${pct}%`;
+                progressPercent.textContent = `${pct}%`;
+            }
+
+            async function next() {
+                while (index < items.length && !stopped) {
+                    const currentIndex = index++;
+                    const item = items[currentIndex];
+
+                    const result = await worker(item);
+                    done++;
+                    doneCountEl.textContent = String(done);
+
+                    if (result.ok) {
+                        ok++;
+                        okCountEl.textContent = String(ok);
+                        log(`[${result.status}] ${result.url}`, "ok");
+                    } else {
+                        err++;
+                        errCountEl.textContent = String(err);
+                        log(`${result.url} → ${result.error}`, "err");
+                    }
+
+                    updateProgress();
+                }
+            }
+
+            const workers = Array.from({ length: limit }, () => next());
+            await Promise.all(workers);
+
+            return { done, ok, err };
+        }
+
+        /* ── Start ── */
+        startBtn.addEventListener("click", async () => {
+            resetStats();
+            setRunning(true);
+            setStatus("running", "Đang lấy danh sách URL từ sitemap…");
+            startTimer();
+
+            const sitemapUrl = $("sitemapUrl").value.trim();
+            const concurrency = Math.max(1, Math.min(20, Number($("concurrency").value || 6)));
+
+            try {
+                log("Bắt đầu lấy danh sách URL…", "info");
+                const urls = await collectUrlsFromSitemap(sitemapUrl);
+                const uniqueUrls = [...new Set(urls)];
+
+                log(`Tìm thấy ${uniqueUrls.length} URL — bắt đầu warm cache (x${concurrency})`, "info");
+                setStatus("running", `Đang warm cache ${uniqueUrls.length} URL…`);
+
+                const result = await runPool(uniqueUrls, concurrency, warmOneUrl);
+
+                stopTimer();
+
+                // Set final progress bar color
+                progressBar.classList.add("done");
+                if (stopped) {
+                    progressBar.classList.add("has-errors");
+                    setStatus("stopped", `Đã dừng thủ công — ${result.ok} thành công, ${result.err} lỗi`);
+                    log("⏸ Đã dừng thủ công.", "info");
+                } else if (result.err === 0) {
+                    progressBar.classList.add("success");
+                    setStatus("success", `Hoàn tất! Tất cả ${result.ok} URL đã warm cache thành công.`);
+                    log(`🎉 Hoàn tất! ${result.ok}/${result.done} thành công.`, "info");
+                } else if (result.ok === 0) {
+                    progressBar.classList.add("all-errors");
+                    setStatus("error", `Hoàn tất với ${result.err} lỗi — không có URL nào thành công.`);
+                    log(`❌ Hoàn tất: ${result.err} lỗi, 0 thành công.`, "err");
+                } else {
+                    progressBar.classList.add("has-errors");
+                    setStatus("error", `Hoàn tất: ${result.ok} thành công, ${result.err} lỗi`);
+                    log(`⚠ Hoàn tất: ${result.ok} thành công, ${result.err} lỗi.`, "info");
+                }
+            } catch (error) {
+                stopTimer();
+                progressBar.classList.add("done", "all-errors");
+                setStatus("error", `Lỗi: ${error.message}`);
+                log(`Lỗi: ${error.message}`, "err");
+            }
+
+            setRunning(false);
+        });
+
+        /* ── Stop ── */
+        stopBtn.addEventListener("click", () => {
+            stopped = true;
+            log("⏸ Đang dừng…", "info");
+            setStatus("stopped", "Đang dừng…");
+        });
+    </script>
+</body>
+
+</html>
